@@ -1,0 +1,124 @@
+---
+title: "PS2"
+output: html_document
+---
+
+# Problem Set: Diff-in-Diff Estimator
+
+```{r}
+library(tidyverse)
+progresa <- read.csv("progresa-sample.csv.bz2")
+```
+
+
+## 1. Was the Randomization Done Correctly?
+### 1.
+```{r error=TRUE}
+df <- NULL
+newprog <- progresa %>%
+  filter(year == 97)
+newprog <- na.omit(subset(newprog, select = -c(year, indig, sc97, grc97) ))
+T <- subset(newprog, progresa == 'basal')
+C <- subset(newprog, progresa == 0)
+for (i in colnames(newprog)){
+  rbind(df, i)-> df
+  T <- T[[i]]
+  C <- C[[i]]
+  avgT <- mean(T)
+  cbind(df, avgT)-> df
+  avgC <- mean(C)
+  cbind(df, avgC)-> df
+  difftc <- avgT - avgC
+  cbind(df, difftc)-> df
+  testt <- t.test(T)$p.value
+  cbind(df, testt)-> df
+  testc <- t.test(C)$p.value
+  cbind(df, testc)-> df
+}
+df%>%
+  head()
+```
+
+### 2.
+Yes, but very small.
+
+### 3.
+Because this is testing how well the randomization was before the trials.
+
+### 4.
+Because then that means that randomization wasn't done very well.
+
+## 2. MEasuring Impact
+### 1.
+```{r}
+progresa <- progresa%>%
+  mutate(after = (year >= 98) + 0)%>%
+  mutate('T'= (progresa == 'basal') + 0)
+clacprog <- na.omit(progresa)%>%
+  group_by(T, after)%>%
+  filter(poor == 'pobre')%>%
+  summarise(sc = mean(sc))
+clacprog
+```
+
+### 2.
+```{r}
+m <- lm(sc~T * after, data=na.omit(progresa))
+summary(m)
+```
+
+### 3.
+The intercept represents the schooling rates before with no treatment, while T represents the change in schooling rates when the treatment is applied. After represents the change in schooling rates just from the year 97-98, and T:after represents the change in schooling rates from post treatment reform.
+
+### 4.
+The results are statistically significant with a p-value of 2.2e-16, however, if I am reading the table correctly the after does not seem to be significant with a p-value of nearly 1. The overall difference is a 2.5 percent point increase in schooling rates post reform/treatment.
+
+### 5.
+```{r}
+m <- lm(sc~T * after + dist_sec + fam_n + grc + sex, data=na.omit(progresa))
+summary(m)
+```
+
+### 6.
+The multiple regression is very similar, and the results are significant with a p-value of 2.2e-16.
+
+### 7.
+```{r}
+confint(m, level=0.95)
+```
+
+### 8.
+The identifying assumption was that the schooling rate trend would have remained the same without the treatment, aS well as there being no major change in villages that would affect schooling rates for the trial.Furthermore, all villages would be roughly the same over time.
+
+### 9.
+I think that this isn't the most plausible one, because the villages are going to differ. I think before-after might be the most plausible assumptions.
+
+### 10.
+I think that it is a good program conducted well with proven results.
+
+## Part 3.
+### 1.
+Paper read.
+
+### 2.
+Remote-instruction and in-person instruction university counties were compared with nonuniversity counties. There were 22 remote instruction counties, and 79 in-person instruction counties.
+
+### 3.
+21 days before and after the start of the Fall semester.
+
+### 4.
+The treatment is instruction going remote.
+
+### 5.
+Covid-19 incidence.
+
+### 6.
+Too see what percentage of students were getting sick, even if it wasn't covid, and because it plays into overall covid rates.
+
+### 7.
+Effect calculations based off table: (14.7-17.9) = -3.2; (15.3-23.9) = -8.6; -8.6 + -3.2 = *-11.8*
+
+### 8.
+Identifying assumptions include: Covid incidence rates would be identical in the absence of the treatment. There will nothing that significantly impacts the trend of the covid incidence curve either, or that the covid incidence rates for different counties would follow the same curvature or slope without the treatment, and I think that this does seem plausible.
+
+
